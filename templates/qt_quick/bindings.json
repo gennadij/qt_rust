@@ -6,12 +6,17 @@
         "implementationModule": "implementation"
     },
     "objects": {
-        "Simple": {
+        "Time": {
             "type": "Object",
             "properties": {
-                "message": {
-                    "type": "QString",
-                    "write": true
+                "hour": {
+                    "type": "quint32"
+                },
+                "minute": {
+                    "type": "quint32"
+                },
+                "second": {
+                    "type": "quint32"
                 }
             }
         }

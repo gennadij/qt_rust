@@ -5,9 +5,9 @@
 #include <QtCore/QObject>
 #include <QtCore/QAbstractItemModel>
 
-class Simple;
+class Time;
 
-class Simple : public QObject
+class Time : public QObject
 {
     Q_OBJECT
 public:
@@ -15,14 +15,19 @@ public:
 private:
     Private * m_d;
     bool m_ownsPrivate;
-    Q_PROPERTY(QString message READ message WRITE setMessage NOTIFY messageChanged FINAL)
-    explicit Simple(bool owned, QObject *parent);
+    Q_PROPERTY(quint32 hour READ hour NOTIFY hourChanged FINAL)
+    Q_PROPERTY(quint32 minute READ minute NOTIFY minuteChanged FINAL)
+    Q_PROPERTY(quint32 second READ second NOTIFY secondChanged FINAL)
+    explicit Time(bool owned, QObject *parent);
 public:
-    explicit Simple(QObject *parent = nullptr);
-    ~Simple();
-    QString message() const;
-    void setMessage(const QString& v);
+    explicit Time(QObject *parent = nullptr);
+    ~Time();
+    quint32 hour() const;
+    quint32 minute() const;
+    quint32 second() const;
 Q_SIGNALS:
-    void messageChanged();
+    void hourChanged();
+    void minuteChanged();
+    void secondChanged();
 };
 #endif // BINDINGS_H

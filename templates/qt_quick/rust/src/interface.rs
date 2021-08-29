@@ -9,110 +9,97 @@ use std::ptr::null;
 
 use implementation::*;
 
+pub struct TimeQObject {}
 
-pub enum QString {}
-
-fn set_string_from_utf16(s: &mut String, str: *const c_ushort, len: c_int) {
-    let utf16 = unsafe { slice::from_raw_parts(str, to_usize(len)) };
-    let characters = decode_utf16(utf16.iter().cloned())
-        .map(|r| r.unwrap());
-    s.clear();
-    s.extend(characters);
+pub struct TimeEmitter {
+    qobject: Arc<AtomicPtr<TimeQObject>>,
+    hour_changed: extern fn(*mut TimeQObject),
+    minute_changed: extern fn(*mut TimeQObject),
+    second_changed: extern fn(*mut TimeQObject),
 }
 
+unsafe impl Send for TimeEmitter {}
 
-
-fn to_usize(n: c_int) -> usize {
-    if n < 0 {
-        panic!("Cannot cast {} to usize", n);
-    }
-    n as usize
-}
-
-
-fn to_c_int(n: usize) -> c_int {
-    if n > c_int::max_value() as usize {
-        panic!("Cannot cast {} to c_int", n);
-    }
-    n as c_int
-}
-
-
-pub struct SimpleQObject {}
-
-pub struct SimpleEmitter {
-    qobject: Arc<AtomicPtr<SimpleQObject>>,
-    message_changed: fn(*mut SimpleQObject),
-}
-
-unsafe impl Send for SimpleEmitter {}
-
-impl SimpleEmitter {
+impl TimeEmitter {
     /// Clone the emitter
     ///
     /// The emitter can only be cloned when it is mutable. The emitter calls
     /// into C++ code which may call into Rust again. If emmitting is possible
     /// from immutable structures, that might lead to access to a mutable
     /// reference. That is undefined behaviour and forbidden.
-    pub fn clone(&mut self) -> SimpleEmitter {
-        SimpleEmitter {
+    pub fn clone(&mut self) -> TimeEmitter {
+        TimeEmitter {
             qobject: self.qobject.clone(),
-            message_changed: self.message_changed,
+            hour_changed: self.hour_changed,
+            minute_changed: self.minute_changed,
+            second_changed: self.second_changed,
         }
     }
     fn clear(&self) {
-        let n: *const SimpleQObject = null();
-        self.qobject.store(n as *mut SimpleQObject, Ordering::SeqCst);
+        let n: *const TimeQObject = null();
+        self.qobject.store(n as *mut TimeQObject, Ordering::SeqCst);
     }
-    pub fn message_changed(&mut self) {
+    pub fn hour_changed(&mut self) {
         let ptr = self.qobject.load(Ordering::SeqCst);
         if !ptr.is_null() {
-            (self.message_changed)(ptr);
+            (self.hour_changed)(ptr);
+        }
+    }
+    pub fn minute_changed(&mut self) {
+        let ptr = self.qobject.load(Ordering::SeqCst);
+        if !ptr.is_null() {
+            (self.minute_changed)(ptr);
+        }
+    }
+    pub fn second_changed(&mut self) {
+        let ptr = self.qobject.load(Ordering::SeqCst);
+        if !ptr.is_null() {
+            (self.second_changed)(ptr);
         }
     }
 }
 
-pub trait SimpleTrait {
-    fn new(emit: SimpleEmitter) -> Self;
-    fn emit(&mut self) -> &mut SimpleEmitter;
-    fn message(&self) -> &str;
-    fn set_message(&mut self, value: String);
+pub trait TimeTrait {
+    fn new(emit: TimeEmitter) -> Self;
+    fn emit(&mut self) -> &mut TimeEmitter;
+    fn hour(&self) -> u32;
+    fn minute(&self) -> u32;
+    fn second(&self) -> u32;
 }
 
 #[no_mangle]
-pub extern "C" fn simple_new(
-    simple: *mut SimpleQObject,
-    simple_message_changed: fn(*mut SimpleQObject),
-) -> *mut Simple {
-    let simple_emit = SimpleEmitter {
-        qobject: Arc::new(AtomicPtr::new(simple)),
-        message_changed: simple_message_changed,
+pub extern "C" fn time_new(
+    time: *mut TimeQObject,
+    time_hour_changed: extern fn(*mut TimeQObject),
+    time_minute_changed: extern fn(*mut TimeQObject),
+    time_second_changed: extern fn(*mut TimeQObject),
+) -> *mut Time {
+    let time_emit = TimeEmitter {
+        qobject: Arc::new(AtomicPtr::new(time)),
+        hour_changed: time_hour_changed,
+        minute_changed: time_minute_changed,
+        second_changed: time_second_changed,
     };
-    let d_simple = Simple::new(simple_emit);
-    Box::into_raw(Box::new(d_simple))
+    let d_time = Time::new(time_emit);
+    Box::into_raw(Box::new(d_time))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simple_free(ptr: *mut Simple) {
+pub unsafe extern "C" fn time_free(ptr: *mut Time) {
     Box::from_raw(ptr).emit().clear();
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simple_message_get(
-    ptr: *const Simple,
-    p: *mut QString,
-    set: fn(*mut QString, *const c_char, c_int),
-) {
-    let o = &*ptr;
-    let v = o.message();
-    let s: *const c_char = v.as_ptr() as *const c_char;
-    set(p, s, to_c_int(v.len()));
+pub unsafe extern "C" fn time_hour_get(ptr: *const Time) -> u32 {
+    (&*ptr).hour()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn simple_message_set(ptr: *mut Simple, v: *const c_ushort, len: c_int) {
-    let o = &mut *ptr;
-    let mut s = String::new();
-    set_string_from_utf16(&mut s, v, len);
-    o.set_message(s);
+pub unsafe extern "C" fn time_minute_get(ptr: *const Time) -> u32 {
+    (&*ptr).minute()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn time_second_get(ptr: *const Time) -> u32 {
+    (&*ptr).second()
 }
