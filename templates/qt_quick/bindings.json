@@ -19,6 +19,14 @@
                     "type": "quint32"
                 }
             }
+        },
+        "Radicand" : {
+          "type" : "Object",
+            "properties" : {
+              "rad" : {
+                "type" : "quint32"
+              }
+            }
         }
     }
 }

@@ -9,6 +9,69 @@ use std::ptr::null;
 
 use implementation::*;
 
+pub struct RadicandQObject {}
+
+pub struct RadicandEmitter {
+    qobject: Arc<AtomicPtr<RadicandQObject>>,
+    rad_changed: extern fn(*mut RadicandQObject),
+}
+
+unsafe impl Send for RadicandEmitter {}
+
+impl RadicandEmitter {
+    /// Clone the emitter
+    ///
+    /// The emitter can only be cloned when it is mutable. The emitter calls
+    /// into C++ code which may call into Rust again. If emmitting is possible
+    /// from immutable structures, that might lead to access to a mutable
+    /// reference. That is undefined behaviour and forbidden.
+    pub fn clone(&mut self) -> RadicandEmitter {
+        RadicandEmitter {
+            qobject: self.qobject.clone(),
+            rad_changed: self.rad_changed,
+        }
+    }
+    fn clear(&self) {
+        let n: *const RadicandQObject = null();
+        self.qobject.store(n as *mut RadicandQObject, Ordering::SeqCst);
+    }
+    pub fn rad_changed(&mut self) {
+        let ptr = self.qobject.load(Ordering::SeqCst);
+        if !ptr.is_null() {
+            (self.rad_changed)(ptr);
+        }
+    }
+}
+
+pub trait RadicandTrait {
+    fn new(emit: RadicandEmitter) -> Self;
+    fn emit(&mut self) -> &mut RadicandEmitter;
+    fn rad(&self) -> u32;
+}
+
+#[no_mangle]
+pub extern "C" fn radicand_new(
+    radicand: *mut RadicandQObject,
+    radicand_rad_changed: extern fn(*mut RadicandQObject),
+) -> *mut Radicand {
+    let radicand_emit = RadicandEmitter {
+        qobject: Arc::new(AtomicPtr::new(radicand)),
+        rad_changed: radicand_rad_changed,
+    };
+    let d_radicand = Radicand::new(radicand_emit);
+    Box::into_raw(Box::new(d_radicand))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn radicand_free(ptr: *mut Radicand) {
+    Box::from_raw(ptr).emit().clear();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn radicand_rad_get(ptr: *const Radicand) -> u32 {
+    (&*ptr).rad()
+}
+
 pub struct TimeQObject {}
 
 pub struct TimeEmitter {

@@ -7,6 +7,23 @@ pub struct Time {
     emit: TimeEmitter
 }
 
+pub struct Radicand {
+  emit : RadicandEmitter
+}
+
+impl RadicandTrait for Radicand {
+  fn new(mut emit: RadicandEmitter) -> Self {
+    Radicand {
+      emit
+    }
+  }
+  fn emit(&mut self) -> &mut RadicandEmitter {
+    &mut self.emit
+  }
+  fn rad(&self) -> u32{
+    2
+  }
+}
 
 fn emit_time(mut emit: TimeEmitter) {
     thread::spawn(move || {

@@ -5,7 +5,26 @@
 #include <QtCore/QObject>
 #include <QtCore/QAbstractItemModel>
 
+class Radicand;
 class Time;
+
+class Radicand : public QObject
+{
+    Q_OBJECT
+public:
+    class Private;
+private:
+    Private * m_d;
+    bool m_ownsPrivate;
+    Q_PROPERTY(quint32 rad READ rad NOTIFY radChanged FINAL)
+    explicit Radicand(bool owned, QObject *parent);
+public:
+    explicit Radicand(QObject *parent = nullptr);
+    ~Radicand();
+    quint32 rad() const;
+Q_SIGNALS:
+    void radChanged();
+};
 
 class Time : public QObject
 {

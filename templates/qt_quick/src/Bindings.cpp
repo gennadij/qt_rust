@@ -2,6 +2,10 @@
 #include "Bindings.h"
 
 namespace {
+    inline void radicandRadChanged(Radicand* o)
+    {
+        Q_EMIT o->radChanged();
+    }
     inline void timeHourChanged(Time* o)
     {
         Q_EMIT o->hourChanged();
@@ -16,6 +20,12 @@ namespace {
     }
 }
 extern "C" {
+    Radicand::Private* radicand_new(Radicand*, void (*)(Radicand*));
+    void radicand_free(Radicand::Private*);
+    quint32 radicand_rad_get(const Radicand::Private*);
+};
+
+extern "C" {
     Time::Private* time_new(Time*, void (*)(Time*), void (*)(Time*), void (*)(Time*));
     void time_free(Time::Private*);
     quint32 time_hour_get(const Time::Private*);
@@ -23,6 +33,30 @@ extern "C" {
     quint32 time_second_get(const Time::Private*);
 };
 
+Radicand::Radicand(bool /*owned*/, QObject *parent):
+    QObject(parent),
+    m_d(nullptr),
+    m_ownsPrivate(false)
+{
+}
+
+Radicand::Radicand(QObject *parent):
+    QObject(parent),
+    m_d(radicand_new(this,
+        radicandRadChanged)),
+    m_ownsPrivate(true)
+{
+}
+
+Radicand::~Radicand() {
+    if (m_ownsPrivate) {
+        radicand_free(m_d);
+    }
+}
+quint32 Radicand::rad() const
+{
+    return radicand_rad_get(m_d);
+}
 Time::Time(bool /*owned*/, QObject *parent):
     QObject(parent),
     m_d(nullptr),
