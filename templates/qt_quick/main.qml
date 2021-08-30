@@ -15,20 +15,30 @@ Window {
   Time {
       id: time
   }
+
+  Radicand {
+    id: radicand
+  }
+
   GridLayout {
     id: grid
     columns: 3
 
-   Label {
-    text: "Radicand"
-    font.pixelSize: 18
-    color: "black"
-  }
-  TextField {
-    textColor : "black"
-    placeholderText: qsTr("Enter name")
-    onEditingFinished: {
-      console.log(text);
+    Label {
+      text: "Radicand"
+      font.pixelSize: 18
+      color: "black"
+    }
+
+    TextField {
+      textColor : "black"
+      placeholderText: qsTr("Enter name")
+      onEditingFinished: {
+        console.log(text);
+        console.log(radicand.rad)
+        console.log(radicand.param)
+        radicand.param : text
+      }
     }
   }
 }
@@ -83,4 +93,4 @@ Window {
   //   }
   // }
   
-}
+//}

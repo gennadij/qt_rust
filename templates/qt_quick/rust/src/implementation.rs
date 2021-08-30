@@ -8,20 +8,34 @@ pub struct Time {
 }
 
 pub struct Radicand {
-  emit : RadicandEmitter
+  emit : RadicandEmitter,
+  param: String
 }
 
 impl RadicandTrait for Radicand {
-  fn new(mut emit: RadicandEmitter) -> Self {
+  fn new(emit: RadicandEmitter) -> Self {
     Radicand {
-      emit
+      emit : emit,
+      param : "bla bla".to_string()
     }
   }
+
   fn emit(&mut self) -> &mut RadicandEmitter {
     &mut self.emit
   }
+
   fn rad(&self) -> u32{
-    2
+    2 + 2
+  }
+
+  fn param(&self) -> &str {
+    &self.param
+  }
+
+  fn set_param (&mut self, value: String) {
+    println!("Param {}", self.param);
+    self.param = value;
+    self.emit.param_changed();
   }
 }
 

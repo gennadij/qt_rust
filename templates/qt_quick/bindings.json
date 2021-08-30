@@ -25,6 +25,10 @@
             "properties" : {
               "rad" : {
                 "type" : "quint32"
+              },
+              "param" : {
+                "type" : "QString",
+                "write" : true
               }
             }
         }

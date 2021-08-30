@@ -2,6 +2,15 @@
 #include "Bindings.h"
 
 namespace {
+
+    typedef void (*qstring_set)(QString* val, const char* utf8, int nbytes);
+    void set_qstring(QString* val, const char* utf8, int nbytes) {
+        *val = QString::fromUtf8(utf8, nbytes);
+    }
+    inline void radicandParamChanged(Radicand* o)
+    {
+        Q_EMIT o->paramChanged();
+    }
     inline void radicandRadChanged(Radicand* o)
     {
         Q_EMIT o->radChanged();
@@ -20,8 +29,10 @@ namespace {
     }
 }
 extern "C" {
-    Radicand::Private* radicand_new(Radicand*, void (*)(Radicand*));
+    Radicand::Private* radicand_new(Radicand*, void (*)(Radicand*), void (*)(Radicand*));
     void radicand_free(Radicand::Private*);
+    void radicand_param_get(const Radicand::Private*, QString*, qstring_set);
+    void radicand_param_set(Radicand::Private*, const ushort *str, int len);
     quint32 radicand_rad_get(const Radicand::Private*);
 };
 
@@ -43,6 +54,7 @@ Radicand::Radicand(bool /*owned*/, QObject *parent):
 Radicand::Radicand(QObject *parent):
     QObject(parent),
     m_d(radicand_new(this,
+        radicandParamChanged,
         radicandRadChanged)),
     m_ownsPrivate(true)
 {
@@ -52,6 +64,15 @@ Radicand::~Radicand() {
     if (m_ownsPrivate) {
         radicand_free(m_d);
     }
+}
+QString Radicand::param() const
+{
+    QString v;
+    radicand_param_get(m_d, &v, set_qstring);
+    return v;
+}
+void Radicand::setParam(const QString& v) {
+    radicand_param_set(m_d, reinterpret_cast<const ushort*>(v.data()), v.size());
 }
 quint32 Radicand::rad() const
 {
