@@ -6,31 +6,15 @@
     "implementationModule": "implementation"
   },
   "objects": {
-    "Time": {
-        "type": "Object",
-        "properties": {
-            "hour": {
-                "type": "quint32"
-            },
-            "minute": {
-                "type": "quint32"
-            },
-            "second": {
-                "type": "quint32"
-            }
-        }
-    },
     "Radicand" : {
       "type" : "Object",
         "properties" : {
           "rad" : {
             "type" : "quint32"
-          }
-        },
-        "itemProperties": {
+          },
           "param": {
-              "type": "QString",
-              "write": true
+            "type": "QString",
+            "write": true
           }
       }
     }

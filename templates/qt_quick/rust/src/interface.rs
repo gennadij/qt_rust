@@ -42,6 +42,7 @@ pub struct RadicandQObject {}
 
 pub struct RadicandEmitter {
     qobject: Arc<AtomicPtr<RadicandQObject>>,
+    param_changed: extern fn(*mut RadicandQObject),
     rad_changed: extern fn(*mut RadicandQObject),
 }
 
@@ -57,12 +58,19 @@ impl RadicandEmitter {
     pub fn clone(&mut self) -> RadicandEmitter {
         RadicandEmitter {
             qobject: self.qobject.clone(),
+            param_changed: self.param_changed,
             rad_changed: self.rad_changed,
         }
     }
     fn clear(&self) {
         let n: *const RadicandQObject = null();
         self.qobject.store(n as *mut RadicandQObject, Ordering::SeqCst);
+    }
+    pub fn param_changed(&mut self) {
+        let ptr = self.qobject.load(Ordering::SeqCst);
+        if !ptr.is_null() {
+            (self.param_changed)(ptr);
+        }
     }
     pub fn rad_changed(&mut self) {
         let ptr = self.qobject.load(Ordering::SeqCst);
@@ -75,16 +83,20 @@ impl RadicandEmitter {
 pub trait RadicandTrait {
     fn new(emit: RadicandEmitter) -> Self;
     fn emit(&mut self) -> &mut RadicandEmitter;
+    fn param(&self) -> &str;
+    fn set_param(&mut self, value: String);
     fn rad(&self) -> u32;
 }
 
 #[no_mangle]
 pub extern "C" fn radicand_new(
     radicand: *mut RadicandQObject,
+    radicand_param_changed: extern fn(*mut RadicandQObject),
     radicand_rad_changed: extern fn(*mut RadicandQObject),
 ) -> *mut Radicand {
     let radicand_emit = RadicandEmitter {
         qobject: Arc::new(AtomicPtr::new(radicand)),
+        param_changed: radicand_param_changed,
         rad_changed: radicand_rad_changed,
     };
     let d_radicand = Radicand::new(radicand_emit);
@@ -97,101 +109,26 @@ pub unsafe extern "C" fn radicand_free(ptr: *mut Radicand) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn radicand_param_get(
+    ptr: *const Radicand,
+    p: *mut QString,
+    set: extern fn(*mut QString, *const c_char, c_int),
+) {
+    let o = &*ptr;
+    let v = o.param();
+    let s: *const c_char = v.as_ptr() as *const c_char;
+    set(p, s, to_c_int(v.len()));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn radicand_param_set(ptr: *mut Radicand, v: *const c_ushort, len: c_int) {
+    let o = &mut *ptr;
+    let mut s = String::new();
+    set_string_from_utf16(&mut s, v, len);
+    o.set_param(s);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn radicand_rad_get(ptr: *const Radicand) -> u32 {
     (&*ptr).rad()
-}
-
-pub struct TimeQObject {}
-
-pub struct TimeEmitter {
-    qobject: Arc<AtomicPtr<TimeQObject>>,
-    hour_changed: extern fn(*mut TimeQObject),
-    minute_changed: extern fn(*mut TimeQObject),
-    second_changed: extern fn(*mut TimeQObject),
-}
-
-unsafe impl Send for TimeEmitter {}
-
-impl TimeEmitter {
-    /// Clone the emitter
-    ///
-    /// The emitter can only be cloned when it is mutable. The emitter calls
-    /// into C++ code which may call into Rust again. If emmitting is possible
-    /// from immutable structures, that might lead to access to a mutable
-    /// reference. That is undefined behaviour and forbidden.
-    pub fn clone(&mut self) -> TimeEmitter {
-        TimeEmitter {
-            qobject: self.qobject.clone(),
-            hour_changed: self.hour_changed,
-            minute_changed: self.minute_changed,
-            second_changed: self.second_changed,
-        }
-    }
-    fn clear(&self) {
-        let n: *const TimeQObject = null();
-        self.qobject.store(n as *mut TimeQObject, Ordering::SeqCst);
-    }
-    pub fn hour_changed(&mut self) {
-        let ptr = self.qobject.load(Ordering::SeqCst);
-        if !ptr.is_null() {
-            (self.hour_changed)(ptr);
-        }
-    }
-    pub fn minute_changed(&mut self) {
-        let ptr = self.qobject.load(Ordering::SeqCst);
-        if !ptr.is_null() {
-            (self.minute_changed)(ptr);
-        }
-    }
-    pub fn second_changed(&mut self) {
-        let ptr = self.qobject.load(Ordering::SeqCst);
-        if !ptr.is_null() {
-            (self.second_changed)(ptr);
-        }
-    }
-}
-
-pub trait TimeTrait {
-    fn new(emit: TimeEmitter) -> Self;
-    fn emit(&mut self) -> &mut TimeEmitter;
-    fn hour(&self) -> u32;
-    fn minute(&self) -> u32;
-    fn second(&self) -> u32;
-}
-
-#[no_mangle]
-pub extern "C" fn time_new(
-    time: *mut TimeQObject,
-    time_hour_changed: extern fn(*mut TimeQObject),
-    time_minute_changed: extern fn(*mut TimeQObject),
-    time_second_changed: extern fn(*mut TimeQObject),
-) -> *mut Time {
-    let time_emit = TimeEmitter {
-        qobject: Arc::new(AtomicPtr::new(time)),
-        hour_changed: time_hour_changed,
-        minute_changed: time_minute_changed,
-        second_changed: time_second_changed,
-    };
-    let d_time = Time::new(time_emit);
-    Box::into_raw(Box::new(d_time))
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn time_free(ptr: *mut Time) {
-    Box::from_raw(ptr).emit().clear();
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn time_hour_get(ptr: *const Time) -> u32 {
-    (&*ptr).hour()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn time_minute_get(ptr: *const Time) -> u32 {
-    (&*ptr).minute()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn time_second_get(ptr: *const Time) -> u32 {
-    (&*ptr).second()
 }

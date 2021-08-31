@@ -4,3 +4,5 @@
 
 # tutorial build
 /build/tutorial/
+build/
+templates/qt_quick/build/

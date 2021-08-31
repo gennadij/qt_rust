@@ -7,7 +7,7 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
-    qmlRegisterType<Time>("RustCode", 1, 0, "Time");
+    // qmlRegisterType<Time>("RustCode", 1, 0, "Time");
     qmlRegisterType<Radicand>("RustCode", 1, 0, "Radicand");
 
     QQmlApplicationEngine engine;

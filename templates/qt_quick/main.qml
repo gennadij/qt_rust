@@ -1,4 +1,4 @@
-import QtQuick 2.5
+import QtQuick 2.9
 import QtQuick.Window 2.2
 import RustCode 1.0
 import QtQuick.Controls 1.4
@@ -12,18 +12,22 @@ Window {
   color : "grey"
 
   // here is our Rust time
-  Time {
-      id: time
-  }
+  // Time {
+  //     id: time
+  // }
 
   Radicand {
     id: radicand
   }
-
+  
   GridLayout {
     id: grid
-    columns: 3
-
+    columns: 2
+    // Label {
+    //   text : "App für exacten Berechnung des Wurzels"
+    //   font.pixelSize : 24
+    //   color : "black"
+    // }
     Label {
       text: "Radicand"
       font.pixelSize: 18
@@ -32,11 +36,15 @@ Window {
 
     TextField {
       textColor : "black"
-      placeholderText: qsTr("Enter name")
+      // placeholderText: qsTr("Enter Radikand")
+      
+      inputMask: qsTr("000000")
       onEditingFinished: {
         console.log(text);
         console.log(radicand.rad)
         console.log(radicand.param)
+        radicand.param = "text"
+        
       }
     }
   }
