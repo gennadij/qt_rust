@@ -42,7 +42,6 @@ pub struct RadicandQObject {}
 
 pub struct RadicandEmitter {
     qobject: Arc<AtomicPtr<RadicandQObject>>,
-    param_changed: extern fn(*mut RadicandQObject),
     rad_changed: extern fn(*mut RadicandQObject),
 }
 
@@ -58,19 +57,12 @@ impl RadicandEmitter {
     pub fn clone(&mut self) -> RadicandEmitter {
         RadicandEmitter {
             qobject: self.qobject.clone(),
-            param_changed: self.param_changed,
             rad_changed: self.rad_changed,
         }
     }
     fn clear(&self) {
         let n: *const RadicandQObject = null();
         self.qobject.store(n as *mut RadicandQObject, Ordering::SeqCst);
-    }
-    pub fn param_changed(&mut self) {
-        let ptr = self.qobject.load(Ordering::SeqCst);
-        if !ptr.is_null() {
-            (self.param_changed)(ptr);
-        }
     }
     pub fn rad_changed(&mut self) {
         let ptr = self.qobject.load(Ordering::SeqCst);
@@ -83,20 +75,16 @@ impl RadicandEmitter {
 pub trait RadicandTrait {
     fn new(emit: RadicandEmitter) -> Self;
     fn emit(&mut self) -> &mut RadicandEmitter;
-    fn param(&self) -> &str;
-    fn set_param(&mut self, value: String);
     fn rad(&self) -> u32;
 }
 
 #[no_mangle]
 pub extern "C" fn radicand_new(
     radicand: *mut RadicandQObject,
-    radicand_param_changed: extern fn(*mut RadicandQObject),
     radicand_rad_changed: extern fn(*mut RadicandQObject),
 ) -> *mut Radicand {
     let radicand_emit = RadicandEmitter {
         qobject: Arc::new(AtomicPtr::new(radicand)),
-        param_changed: radicand_param_changed,
         rad_changed: radicand_rad_changed,
     };
     let d_radicand = Radicand::new(radicand_emit);
@@ -106,26 +94,6 @@ pub extern "C" fn radicand_new(
 #[no_mangle]
 pub unsafe extern "C" fn radicand_free(ptr: *mut Radicand) {
     Box::from_raw(ptr).emit().clear();
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn radicand_param_get(
-    ptr: *const Radicand,
-    p: *mut QString,
-    set: extern fn(*mut QString, *const c_char, c_int),
-) {
-    let o = &*ptr;
-    let v = o.param();
-    let s: *const c_char = v.as_ptr() as *const c_char;
-    set(p, s, to_c_int(v.len()));
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn radicand_param_set(ptr: *mut Radicand, v: *const c_ushort, len: c_int) {
-    let o = &mut *ptr;
-    let mut s = String::new();
-    set_string_from_utf16(&mut s, v, len);
-    o.set_param(s);
 }
 
 #[no_mangle]

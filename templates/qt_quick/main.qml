@@ -37,7 +37,6 @@ Window {
         console.log(text);
         console.log(radicand.rad)
         console.log(radicand.param)
-        radicand.param : text
       }
     }
   }

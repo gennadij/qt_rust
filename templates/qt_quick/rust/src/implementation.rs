@@ -32,10 +32,11 @@ impl RadicandTrait for Radicand {
     &self.param
   }
 
-  fn set_param (&mut self, value: String) {
+  fn set_param (&mut self, value: String) -> bool {
     println!("Param {}", self.param);
     self.param = value;
     self.emit.param_changed();
+    true;
   }
 }
 
