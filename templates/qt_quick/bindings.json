@@ -9,8 +9,8 @@
     "Radicand" : {
       "type" : "Object",
         "properties" : {
-          "rad" : {
-            "type" : "quint32"
+          "result" : {
+            "type" : "QString"
           },
           "param": {
             "type": "QString",

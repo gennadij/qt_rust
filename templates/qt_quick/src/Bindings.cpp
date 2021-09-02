@@ -11,9 +11,9 @@ namespace {
     {
         Q_EMIT o->paramChanged();
     }
-    inline void radicandRadChanged(Radicand* o)
+    inline void radicandResultChanged(Radicand* o)
     {
-        Q_EMIT o->radChanged();
+        Q_EMIT o->resultChanged();
     }
 }
 extern "C" {
@@ -21,7 +21,7 @@ extern "C" {
     void radicand_free(Radicand::Private*);
     void radicand_param_get(const Radicand::Private*, QString*, qstring_set);
     void radicand_param_set(Radicand::Private*, const ushort *str, int len);
-    quint32 radicand_rad_get(const Radicand::Private*);
+    void radicand_result_get(const Radicand::Private*, QString*, qstring_set);
 };
 
 Radicand::Radicand(bool /*owned*/, QObject *parent):
@@ -35,7 +35,7 @@ Radicand::Radicand(QObject *parent):
     QObject(parent),
     m_d(radicand_new(this,
         radicandParamChanged,
-        radicandRadChanged)),
+        radicandResultChanged)),
     m_ownsPrivate(true)
 {
 }
@@ -54,7 +54,9 @@ QString Radicand::param() const
 void Radicand::setParam(const QString& v) {
     radicand_param_set(m_d, reinterpret_cast<const ushort*>(v.data()), v.size());
 }
-quint32 Radicand::rad() const
+QString Radicand::result() const
 {
-    return radicand_rad_get(m_d);
+    QString v;
+    radicand_result_get(m_d, &v, set_qstring);
+    return v;
 }

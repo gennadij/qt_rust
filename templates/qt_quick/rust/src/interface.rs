@@ -43,7 +43,7 @@ pub struct RadicandQObject {}
 pub struct RadicandEmitter {
     qobject: Arc<AtomicPtr<RadicandQObject>>,
     param_changed: extern fn(*mut RadicandQObject),
-    rad_changed: extern fn(*mut RadicandQObject),
+    result_changed: extern fn(*mut RadicandQObject),
 }
 
 unsafe impl Send for RadicandEmitter {}
@@ -59,7 +59,7 @@ impl RadicandEmitter {
         RadicandEmitter {
             qobject: self.qobject.clone(),
             param_changed: self.param_changed,
-            rad_changed: self.rad_changed,
+            result_changed: self.result_changed,
         }
     }
     fn clear(&self) {
@@ -72,10 +72,10 @@ impl RadicandEmitter {
             (self.param_changed)(ptr);
         }
     }
-    pub fn rad_changed(&mut self) {
+    pub fn result_changed(&mut self) {
         let ptr = self.qobject.load(Ordering::SeqCst);
         if !ptr.is_null() {
-            (self.rad_changed)(ptr);
+            (self.result_changed)(ptr);
         }
     }
 }
@@ -85,19 +85,19 @@ pub trait RadicandTrait {
     fn emit(&mut self) -> &mut RadicandEmitter;
     fn param(&self) -> &str;
     fn set_param(&mut self, value: String);
-    fn rad(&self) -> u32;
+    fn result(&self) -> &str;
 }
 
 #[no_mangle]
 pub extern "C" fn radicand_new(
     radicand: *mut RadicandQObject,
     radicand_param_changed: extern fn(*mut RadicandQObject),
-    radicand_rad_changed: extern fn(*mut RadicandQObject),
+    radicand_result_changed: extern fn(*mut RadicandQObject),
 ) -> *mut Radicand {
     let radicand_emit = RadicandEmitter {
         qobject: Arc::new(AtomicPtr::new(radicand)),
         param_changed: radicand_param_changed,
-        rad_changed: radicand_rad_changed,
+        result_changed: radicand_result_changed,
     };
     let d_radicand = Radicand::new(radicand_emit);
     Box::into_raw(Box::new(d_radicand))
@@ -129,6 +129,13 @@ pub unsafe extern "C" fn radicand_param_set(ptr: *mut Radicand, v: *const c_usho
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn radicand_rad_get(ptr: *const Radicand) -> u32 {
-    (&*ptr).rad()
+pub unsafe extern "C" fn radicand_result_get(
+    ptr: *const Radicand,
+    p: *mut QString,
+    set: extern fn(*mut QString, *const c_char, c_int),
+) {
+    let o = &*ptr;
+    let v = o.result();
+    let s: *const c_char = v.as_ptr() as *const c_char;
+    set(p, s, to_c_int(v.len()));
 }

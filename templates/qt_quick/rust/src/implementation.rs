@@ -1,7 +1,7 @@
 use interface::*;
-use chrono::{Local, Timelike};
-use std::thread;
-use std::time::Duration;
+// use chrono::{Local, Timelike};
+// use std::thread;
+// use std::time::Duration;
 
 // pub struct Time {
 //     emit: TimeEmitter
@@ -24,8 +24,8 @@ impl RadicandTrait for Radicand {
     &mut self.emit
   }
 
-  fn rad(&self) -> u32{
-    2 + 2
+  fn result(&self) -> &str{
+    "2 * qroot(2)"
   }
 
   fn param(&self) -> &str {
@@ -34,7 +34,7 @@ impl RadicandTrait for Radicand {
   }
 
   fn set_param (&mut self, value: String) {
-    println!("Param {}", self.param);
+    println!("Rust set_param {}", self.param);
     self.param = value;
     self.emit.param_changed();
   }

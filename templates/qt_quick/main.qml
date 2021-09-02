@@ -6,10 +6,10 @@ import QtQuick.Layouts 1.15
 
 
 Window {
-  width: 512
-  height: 512
+  width: 600
+  height: 200
   visible: true
-  color : "grey"
+  // color : "grey"
 
   // here is our Rust time
   // Time {
@@ -22,30 +22,35 @@ Window {
   
   GridLayout {
     id: grid
-    columns: 2
+    columns: 4
     // Label {
     //   text : "App für exacten Berechnung des Wurzels"
     //   font.pixelSize : 24
     //   color : "black"
     // }
     Label {
-      text: "Radicand"
+      text: "Radicand:  "
       font.pixelSize: 18
-      color: "black"
+      // color: "black"
     }
 
     TextField {
-      textColor : "black"
+      // textColor : "black"
       // placeholderText: qsTr("Enter Radikand")
       
-      inputMask: qsTr("000000")
+      // inputMask: qsTr("000000")
       onEditingFinished: {
-        console.log(text);
-        console.log(radicand.rad)
-        console.log(radicand.param)
-        radicand.param = "text"
+        radicand.param = text
         
       }
+    }
+    Button {
+      id : btCalc
+      text: "calc"
+    }
+    
+    Text {
+      text : "Result : " + radicand.result
     }
   }
 }

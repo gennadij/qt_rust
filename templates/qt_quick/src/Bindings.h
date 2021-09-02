@@ -16,16 +16,16 @@ private:
     Private * m_d;
     bool m_ownsPrivate;
     Q_PROPERTY(QString param READ param WRITE setParam NOTIFY paramChanged FINAL)
-    Q_PROPERTY(quint32 rad READ rad NOTIFY radChanged FINAL)
+    Q_PROPERTY(QString result READ result NOTIFY resultChanged FINAL)
     explicit Radicand(bool owned, QObject *parent);
 public:
     explicit Radicand(QObject *parent = nullptr);
     ~Radicand();
     QString param() const;
     void setParam(const QString& v);
-    quint32 rad() const;
+    QString result() const;
 Q_SIGNALS:
     void paramChanged();
-    void radChanged();
+    void resultChanged();
 };
 #endif // BINDINGS_H
